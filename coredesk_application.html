@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full bg-[#0F1012]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoreDesk — Professional Workspace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            desk: {
+              950: '#0F1012',
+              900: '#16181C',
+              850: '#1C1F26',
+              800: '#20232A',
+              700: '#2D313B',
+              600: '#3F4452',
+              400: '#8C93A1',
+              200: '#C2C7D0',
+              50:  '#F0F2F5',
+            },
+            accent: {
+              DEFAULT: '#FF6B00',
+              hover: '#E85D04',
+              soft: 'rgba(255, 107, 0, 0.12)',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar for engineered dense interface */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0F1012;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2D313B;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F4452;
+    }
+    /* Dot Matrix Background for Map & Board Canvas */
+    .bg-dot-matrix {
+      background-image: radial-gradient(#2D313B 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    /* Prevent text selection during canvas drag */
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+</head>
+<body class="h-full font-sans text-desk-50 bg-desk-950 flex flex-col overflow-hidden antialiased select-none">
+
+  <!-- APP CONTAINER -->
+  <div class="flex h-screen w-screen overflow-hidden">
+
+    <!-- SIDEBAR NAV (Hardware Slate) -->
+    <aside class="w-60 bg-desk-900 border-r border-desk-700 flex flex-col justify-between shrink-0 z-20">
+      <div>
+        <!-- Brand Header -->
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-desk-700 bg-desk-950/40">
+          <div class="flex items-center gap-2.5">
+            <div class="w-3 h-3 bg-accent rounded-sm shadow-sm"></div>
+            <span class="font-mono text-xs font-bold tracking-widest text-desk-50 uppercase">COREDESK</span>
+          </div>
+          <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-desk-800 text-desk-400 border border-desk-700">v1.2.0</span>
+        </div>
+
+        <!-- Primary Top-Level Spaces Navigation -->
+        <nav class="p-2 space-y-1">
+          <div class="px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider text-desk-400">Main Spaces</div>
+          
+          <!-- Projects Nav Button -->
+          <button onclick="switchSpace('projects')" id="nav-projects" 
+            class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors text-desk-400 hover:bg-desk-800/60 hover:text-desk-50">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="folder" class="w-4 h-4"></i>
+              <span>1. Projects</span>
+            </div>
+            <span class="text-[10px] font-mono text-desk-400" id="projects-count">5</span>
+          </button>
+
+          <!-- Board Nav Button -->
+          <button onclick="switchSpace('board')" id="nav-board" 
+            class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors text-desk-400 hover:bg-desk-800/60 hover:text-desk-50">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="layout-grid" class="w-4 h-4"></i>
+              <span>2. Board</span>
+            </div>
+            <span class="text-[10px] font-mono text-desk-400" id="board-nodes-count">4</span>
+          </button>
+
+          <!-- Work Sharing Nav Button -->
+          <button onclick="switchSpace('work-sharing')" id="nav-work-sharing" 
+            class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors text-desk-400 hover:bg-desk-800/60 hover:text-desk-50">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="share-2" class="w-4 h-4"></i>
+              <span>3. Work Sharing</span>
+            </div>
+            <span id="plan-badge-sidebar" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-accent/20 text-accent border border-accent/30 font-semibold">PRO</span>
+          </button>
+
+          <!-- Private Vault Nav Button -->
+          <button onclick="switchSpace('vault')" id="nav-vault" 
+            class="nav-btn w-full flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors text-desk-400 hover:bg-desk-800/60 hover:text-desk-50">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="lock" class="w-4 h-4 text-amber-500/80"></i>
+              <span>4. Private Vault</span>
+            </div>
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-desk-400" id="vault-status-icon"></i>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Footer & Account System Info -->
+      <div class="p-3 border-t border-desk-700 bg-desk-950/60 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-xs font-mono text-desk-200">Local Workspace</span>
+          </div>
+          <button onclick="togglePlanModal()" class="text-[10px] font-mono text-accent hover:underline">Manage Plan</button>
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-desk-400 pt-1 border-t border-desk-700/50">
+          <span class="truncate">User: Creator / Engineer</span>
+          <span class="font-mono text-[10px] bg-desk-800 px-1.5 rounded text-desk-200 border border-desk-700" id="current-plan-display">PRO</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-desk-950 relative">
+
+      <!-- ========================================== -->
+      <!-- 1. PROJECTS SPACE                          -->
+      <!-- ========================================== -->
+      <section id="space-projects" class="space-view flex-1 flex flex-col h-full overflow-hidden">
+        <!-- Sub Header & View Switcher -->
+        <header class="h-12 border-b border-desk-700 bg-desk-900 px-4 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <i data-lucide="folder" class="w-4 h-4 text-accent"></i>
+              <h2 class="text-xs font-mono font-semibold tracking-wide uppercase text-desk-50">Project Alpha</h2>
+            </div>
+            <span class="text-desk-700">|</span>
+            
+            <!-- 5 Views Tabs -->
+            <div class="flex items-center bg-desk-950 p-0.5 rounded border border-desk-700 space-x-0.5">
+              <button onclick="switchProjectView('sections')" id="pview-sections" class="pview-btn px-2.5 py-1 text-xs font-mono rounded transition-colors text-desk-400 hover:text-desk-50 flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i> Sections
+              </button>
+              <button onclick="switchProjectView('files')" id="pview-files" class="pview-btn px-2.5 py-1 text-xs font-mono rounded transition-colors text-desk-400 hover:text-desk-50 flex items-center gap-1.5">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Files
+              </button>
+              <button onclick="switchProjectView('tasks')" id="pview-tasks" class="pview-btn px-2.5 py-1 text-xs font-mono rounded transition-colors text-desk-400 hover:text-desk-50 flex items-center gap-1.5">
+                <i data-lucide="kanban" class="w-3.5 h-3.5"></i> Tasks
+              </button>
+              <button onclick="switchProjectView('notes')" id="pview-notes" class="pview-btn px-2.5 py-1 text-xs font-mono rounded transition-colors text-desk-400 hover:text-desk-50 flex items-center gap-1.5">
+                <i data-lucide="notebook" class="w-3.5 h-3.5"></i> Notes
+              </button>
+              <button onclick="switchProjectView('map')" id="pview-map" class="pview-btn px-2.5 py-1 text-xs font-mono rounded transition-colors text-desk-400 hover:text-desk-50 flex items-center gap-1.5">
+                <i data-lucide="network" class="w-3.5 h-3.5"></i> Map
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="text" id="project-search" placeholder="Filter elements..." onkeyup="filterProjectContent()" 
+              class="bg-desk-950 text-xs px-2.5 py-1 border border-desk-700 rounded text-desk-50 focus:outline-none focus:border-accent w-40 font-mono">
+            <button onclick="openCreateItemModal()" class="px-3 py-1 bg-accent hover:bg-accent-hover text-white text-xs font-mono rounded transition-colors flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> New Item
+            </button>
+          </div>
+        </header>
+
+        <!-- Project Views Container -->
+        <div class="flex-1 overflow-auto p-4 bg-desk-950">
+          
+          <!-- View 1: SECTIONS -->
+          <div id="pcontent-sections" class="pcontent-view hidden space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-desk-700">
+              <span class="text-xs font-mono text-desk-400 uppercase tracking-wider">Project Architecture Sections</span>
+              <button onclick="addSectionPrompt()" class="text-xs font-mono text-accent hover:underline">+ Add Named Section</button>
+            </div>
+            <div id="sections-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- View 2: FILES -->
+          <div id="pcontent-files" class="pcontent-view hidden">
+            <div class="border border-desk-700 rounded bg-desk-900 overflow-hidden">
+              <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-desk-800 text-[11px] font-mono text-desk-400 border-b border-desk-700">
+                <div class="col-span-5">NAME</div>
+                <div class="col-span-3">SECTION</div>
+                <div class="col-span-2">SIZE / TYPE</div>
+                <div class="col-span-2 text-right">ACTIONS</div>
+              </div>
+              <div id="files-list-container" class="divide-y divide-desk-700/60 font-mono text-xs">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- View 3: TASKS (Kanban) -->
+          <div id="pcontent-tasks" class="pcontent-view hidden h-full">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-[500px]">
+              
+              <!-- Column: À faire -->
+              <div class="bg-desk-900 border border-desk-700 rounded p-3 flex flex-col">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-desk-700">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <h3 class="text-xs font-mono font-bold uppercase text-desk-50">À faire</h3>
+                  </div>
+                  <span id="count-todo" class="text-xs font-mono text-desk-400 bg-desk-800 px-1.5 py-0.5 rounded border border-desk-700">0</span>
+                </div>
+                <div id="kanban-todo" class="flex-1 space-y-2.5 overflow-y-auto pr-1">
+                  <!-- Tasks JS -->
+                </div>
+                <button onclick="quickAddTask('todo')" class="mt-3 w-full py-1.5 border border-dashed border-desk-700 hover:border-accent text-desk-400 hover:text-accent text-xs font-mono rounded transition-colors text-center">+ Add Task</button>
+              </div>
+
+              <!-- Column: En cours -->
+              <div class="bg-desk-900 border border-desk-700 rounded p-3 flex flex-col">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-desk-700">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <h3 class="text-xs font-mono font-bold uppercase text-desk-50">En cours</h3>
+                  </div>
+                  <span id="count-in_progress" class="text-xs font-mono text-desk-400 bg-desk-800 px-1.5 py-0.5 rounded border border-desk-700">0</span>
+                </div>
+                <div id="kanban-in_progress" class="flex-1 space-y-2.5 overflow-y-auto pr-1">
+                  <!-- Tasks JS -->
+                </div>
+                <button onclick="quickAddTask('in_progress')" class="mt-3 w-full py-1.5 border border-dashed border-desk-700 hover:border-accent text-desk-400 hover:text-accent text-xs font-mono rounded transition-colors text-center">+ Add Task</button>
+              </div>
+
+              <!-- Column: Terminé -->
+              <div class="bg-desk-900 border border-desk-700 rounded p-3 flex flex-col">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-desk-700">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <h3 class="text-xs font-mono font-bold uppercase text-desk-50">Terminé</h3>
+                  </div>
+                  <span id="count-done" class="text-xs font-mono text-desk-400 bg-desk-800 px-1.5 py-0.5 rounded border border-desk-700">0</span>
+                </div>
+                <div id="kanban-done" class="flex-1 space-y-2.5 overflow-y-auto pr-1">
+                  <!-- Tasks JS -->
+                </div>
+                <button onclick="quickAddTask('done')" class="mt-3 w-full py-1.5 border border-dashed border-desk-700 hover:border-accent text-desk-400 hover:text-accent text-xs font-mono rounded transition-colors text-center">+ Add Task</button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- View 4: NOTES -->
+          <div id="pcontent-notes" class="pcontent-view hidden h-full">
+            <div class="grid grid-cols-12 gap-4 h-full">
+              <!-- Notes List Sidebar -->
+              <div class="col-span-4 bg-desk-900 border border-desk-700 rounded p-3 flex flex-col">
+                <div class="flex items-center justify-between pb-2 border-b border-desk-700 mb-2">
+                  <span class="text-xs font-mono text-desk-400 uppercase">Document Notes</span>
+                  <button onclick="createNewNote()" class="text-xs font-mono text-accent hover:underline">+ New Note</button>
+                </div>
+                <div id="notes-list" class="space-y-1.5 overflow-y-auto flex-1">
+                  <!-- JS Rendered -->
+                </div>
+              </div>
+              <!-- Active Note Editor -->
+              <div class="col-span-8 bg-desk-900 border border-desk-700 rounded p-4 flex flex-col">
+                <input type="text" id="note-editor-title" placeholder="Note Title..." onkeyup="saveActiveNote()" 
+                  class="bg-transparent text-base font-semibold text-desk-50 border-b border-desk-700 pb-2 mb-3 focus:outline-none focus:border-accent font-sans">
+                <textarea id="note-editor-content" placeholder="Type your technical notes, code snippets, or thoughts..." onkeyup="saveActiveNote()" 
+                  class="flex-1 bg-transparent text-xs text-desk-200 font-mono resize-none focus:outline-none leading-relaxed"></textarea>
+                <div class="pt-2 border-t border-desk-700 text-[10px] font-mono text-desk-400 flex justify-between">
+                  <span>Auto-saved locally</span>
+                  <span id="note-editor-status">Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 5: MAP (Spatial Canvas) -->
+          <div id="pcontent-map" class="pcontent-view hidden h-full relative border border-desk-700 rounded bg-desk-950 bg-dot-matrix overflow-hidden min-h-[500px]">
+            <div class="absolute top-3 left-3 z-10 bg-desk-900/90 border border-desk-700 p-2 rounded text-xs font-mono space-y-1 backdrop-blur-sm">
+              <div class="text-desk-50 font-bold flex items-center gap-1.5">
+                <i data-lucide="network" class="w-3.5 h-3.5 text-accent"></i> Project Spatial Map
+              </div>
+              <p class="text-[10px] text-desk-400">Visualizing existing project elements without duplicate creation.</p>
+              <p class="text-[9px] text-amber-400/80">Removing a node from Map leaves underlying element intact.</p>
+            </div>
+
+            <!-- SVG Line Connections Layer -->
+            <svg id="project-map-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0">
+              <!-- Lines drawn by JS -->
+            </svg>
+
+            <!-- Nodes Layer -->
+            <div id="project-map-canvas" class="absolute inset-0 z-10">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 2. BOARD SPACE (Brainstorming Canvas)      -->
+      <!-- ========================================== -->
+      <section id="space-board" class="space-view hidden flex-1 flex flex-col h-full overflow-hidden">
+        <header class="h-12 border-b border-desk-700 bg-desk-900 px-4 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-3">
+            <i data-lucide="layout-grid" class="w-4 h-4 text-accent"></i>
+            <h2 class="text-xs font-mono font-semibold tracking-wide uppercase text-desk-50">Freeform Brainstorm Board</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="addBoardIdeaCard()" class="px-3 py-1 bg-desk-800 hover:bg-desk-700 text-desk-50 border border-desk-700 text-xs font-mono rounded transition-colors flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5 text-accent"></i> Add Idea Card
+            </button>
+            <button onclick="clearBoardConnections()" class="px-2.5 py-1 text-xs font-mono border border-desk-700 text-desk-400 hover:text-red-400 rounded">
+              Clear Connections
+            </button>
+          </div>
+        </header>
+
+        <div id="board-canvas-wrapper" class="flex-1 relative bg-desk-950 bg-dot-matrix overflow-hidden">
+          <!-- SVG Lines for Idea Connections -->
+          <svg id="board-svg-connections" class="absolute inset-0 w-full h-full pointer-events-none z-0">
+            <!-- Dynamic SVG Orthogonal/Straight lines -->
+          </svg>
+
+          <!-- Board Cards Container -->
+          <div id="board-cards-layer" class="absolute inset-0 z-10">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 3. WORK SHARING SPACE (Includes Teacher)  -->
+      <!-- ========================================== -->
+      <section id="space-work-sharing" class="space-view hidden flex-1 flex flex-col h-full overflow-hidden">
+        <header class="h-12 border-b border-desk-700 bg-desk-900 px-4 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <i data-lucide="share-2" class="w-4 h-4 text-accent"></i>
+              <h2 class="text-xs font-mono font-semibold tracking-wide uppercase text-desk-50">Work Sharing & Education</h2>
+            </div>
+            <span class="text-desk-700">|</span>
+
+            <div class="flex items-center bg-desk-950 p-0.5 rounded border border-desk-700 space-x-0.5">
+              <button onclick="switchWorkSharingTab('sharing')" id="wstab-sharing" class="wstab-btn px-3 py-1 text-xs font-mono rounded transition-colors text-desk-400 hover:text-desk-50 flex items-center gap-1.5">
+                <i data-lucide="globe" class="w-3.5 h-3.5"></i> Project & Board Sharing
+              </button>
+              <button onclick="switchWorkSharingTab('teacher')" id="wstab-teacher" class="wstab-btn px-3 py-1 text-xs font-mono rounded transition-colors text-desk-400 hover:text-desk-50 flex items-center gap-1.5">
+                <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i> Teacher (Courses)
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 font-mono text-xs">
+            <span class="text-desk-400">Plan Status:</span>
+            <span id="ws-plan-tag" class="px-2 py-0.5 bg-accent/20 border border-accent/40 text-accent font-bold rounded">PRO PLAN</span>
+          </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 bg-desk-950">
+          
+          <!-- Sub-Tab 1: Project & Board Sharing -->
+          <div id="wscontent-sharing" class="wscontent-view space-y-6 max-w-5xl">
+            <div class="bg-desk-900 border border-desk-700 rounded p-4">
+              <h3 class="text-xs font-mono uppercase text-desk-50 font-bold mb-1">Access & Permissions Matrix</h3>
+              <p class="text-xs text-desk-400 mb-4">Sharing remains strictly distinct from private personal work. Users retain control over visibility.</p>
+              
+              <div class="space-y-3 font-mono text-xs">
+                <div class="flex items-center justify-between p-3 bg-desk-950 border border-desk-700 rounded">
+                  <div class="flex items-center gap-3">
+                    <i data-lucide="folder" class="w-4 h-4 text-accent"></i>
+                    <div>
+                      <div class="text-desk-50 font-bold">Project Alpha</div>
+                      <div class="text-[10px] text-desk-400">5 Sections · 3 Active Tasks · 2 Notes</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <select class="bg-desk-900 text-xs border border-desk-700 rounded px-2 py-1 text-desk-200">
+                      <option>Private (Only You)</option>
+                      <option selected>Restricted Link (View Only)</option>
+                      <option>Shared Edit Access</option>
+                    </select>
+                    <button class="px-2.5 py-1 bg-desk-800 hover:bg-desk-700 text-desk-50 border border-desk-700 rounded text-xs" onclick="copyShareLink('Project Alpha')">Copy Link</button>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-desk-950 border border-desk-700 rounded">
+                  <div class="flex items-center gap-3">
+                    <i data-lucide="layout-grid" class="w-4 h-4 text-accent"></i>
+                    <div>
+                      <div class="text-desk-50 font-bold">Brainstorm Board #1</div>
+                      <div class="text-[10px] text-desk-400">4 Concept Cards · Spatial Layout</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <select class="bg-desk-900 text-xs border border-desk-700 rounded px-2 py-1 text-desk-200">
+                      <option selected>Private (Only You)</option>
+                      <option>Public Presentation</option>
+                    </select>
+                    <button class="px-2.5 py-1 bg-desk-800 hover:bg-desk-700 text-desk-50 border border-desk-700 rounded text-xs" onclick="copyShareLink('Brainstorm Board')">Copy Link</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-Tab 2: Teacher (Course & Knowledge Module) -->
+          <div id="wscontent-teacher" class="wscontent-view hidden space-y-6 max-w-5xl">
+            <div class="bg-desk-900 border border-desk-700 rounded p-4">
+              <div class="flex items-center justify-between mb-4 pb-3 border-b border-desk-700">
+                <div>
+                  <h3 class="text-xs font-mono uppercase text-desk-50 font-bold flex items-center gap-2">
+                    <i data-lucide="graduation-cap" class="w-4 h-4 text-accent"></i> Teacher Workspace
+                  </h3>
+                  <p class="text-xs text-desk-400 mt-0.5">Designed for engineers, creators, and teachers to share structured courses and materials.</p>
+                </div>
+                <button onclick="createNewCoursePrompt()" class="px-3 py-1.5 bg-accent text-white font-mono text-xs rounded hover:bg-accent-hover transition-colors">
+                  + Create Course
+                </button>
+              </div>
+
+              <!-- Courses List -->
+              <div id="teacher-courses-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                <!-- JS Rendered -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 4. PRIVATE VAULT SPACE                     -->
+      <!-- ========================================== -->
+      <section id="space-vault" class="space-view hidden flex-1 flex flex-col h-full overflow-hidden">
+        
+        <!-- LOCKED PIN SCREEN -->
+        <div id="vault-locked-screen" class="flex-1 flex items-center justify-center bg-desk-950 p-4">
+          <div class="w-full max-w-md bg-desk-900 border border-desk-700 rounded p-6 shadow-2xl text-center space-y-5">
+            <div class="inline-flex p-3 bg-desk-950 border border-desk-700 rounded-full">
+              <i data-lucide="lock" class="w-6 h-6 text-amber-500"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-mono font-bold uppercase text-desk-50">Private Vault Protected</h2>
+              <p class="text-xs text-desk-400 mt-1">Personal document repository separated from project work.</p>
+            </div>
+
+            <div class="space-y-3 pt-2">
+              <label class="block text-xs font-mono text-desk-400 text-left">Enter 4-Digit Security PIN:</label>
+              <div class="flex justify-center gap-2">
+                <input type="password" maxlength="1" id="pin-1" class="pin-input w-12 h-12 text-center text-lg font-mono bg-desk-950 border border-desk-700 rounded focus:border-accent focus:outline-none" onkeyup="movePinFocus(1)">
+                <input type="password" maxlength="1" id="pin-2" class="pin-input w-12 h-12 text-center text-lg font-mono bg-desk-950 border border-desk-700 rounded focus:border-accent focus:outline-none" onkeyup="movePinFocus(2)">
+                <input type="password" maxlength="1" id="pin-3" class="pin-input w-12 h-12 text-center text-lg font-mono bg-desk-950 border border-desk-700 rounded focus:border-accent focus:outline-none" onkeyup="movePinFocus(3)">
+                <input type="password" maxlength="1" id="pin-4" class="pin-input w-12 h-12 text-center text-lg font-mono bg-desk-950 border border-desk-700 rounded focus:border-accent focus:outline-none" onkeyup="movePinFocus(4)">
+              </div>
+              <div id="vault-error-msg" class="text-xs text-red-400 font-mono hidden">Invalid Security PIN. Default: 1234</div>
+            </div>
+
+            <div class="pt-2 border-t border-desk-700/60 flex items-center justify-between text-[10px] font-mono text-desk-400">
+              <span>Default PIN: <strong class="text-accent">1234</strong></span>
+              <button onclick="unlockVault('1234')" class="text-desk-200 hover:underline">Quick Unlock</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- UNLOCKED VAULT CONTENT -->
+        <div id="vault-unlocked-screen" class="hidden flex-1 flex flex-col h-full overflow-hidden">
+          <header class="h-12 border-b border-desk-700 bg-desk-900 px-4 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
+              <h2 class="text-xs font-mono font-semibold tracking-wide uppercase text-desk-50">Private Vault Repository</h2>
+              <span class="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">ISOLATED ENCLAVE</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="addVaultDocumentPrompt()" class="px-3 py-1 bg-desk-800 hover:bg-desk-700 text-desk-50 border border-desk-700 text-xs font-mono rounded">
+                + Add Secure Doc
+              </button>
+              <button onclick="lockVault()" class="px-3 py-1 bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800 text-xs font-mono rounded flex items-center gap-1">
+                <i data-lucide="lock" class="w-3 h-3"></i> Lock Vault
+              </button>
+            </div>
+          </header>
+
+          <div class="flex-1 overflow-y-auto p-6 bg-desk-950">
+            <div class="max-w-4xl space-y-4">
+              <div class="p-3 bg-amber-950/20 border border-amber-800/40 rounded text-xs font-mono text-amber-200/90 flex items-center justify-between">
+                <span>Vault documents are strictly local and never exposed to Work Sharing or Projects.</span>
+                <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+              </div>
+
+              <div class="border border-desk-700 rounded bg-desk-900 overflow-hidden">
+                <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-desk-800 text-[11px] font-mono text-desk-400 border-b border-desk-700">
+                  <div class="col-span-6">DOCUMENT TITLE</div>
+                  <div class="col-span-3">CATEGORY</div>
+                  <div class="col-span-3 text-right">ACTIONS</div>
+                </div>
+                <div id="vault-docs-list" class="divide-y divide-desk-700/60 font-mono text-xs">
+                  <!-- JS Rendered -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: ITEM CREATION (UNIFIED) -->
+  <div id="modal-item" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-desk-900 border border-desk-700 rounded w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-desk-700 pb-2">
+        <h3 class="text-xs font-mono font-bold text-desk-50 uppercase" id="modal-item-title">Add New Element</h3>
+        <button onclick="closeModal('modal-item')" class="text-desk-400 hover:text-desk-50"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="space-y-3 font-mono text-xs">
+        <div>
+          <label class="block text-desk-400 mb-1">Title / Name</label>
+          <input type="text" id="item-title-input" class="w-full bg-desk-950 border border-desk-700 rounded p-2 text-desk-50 focus:border-accent focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-desk-400 mb-1">Target Section</label>
+          <select id="item-section-select" class="w-full bg-desk-950 border border-desk-700 rounded p-2 text-desk-50 focus:border-accent focus:outline-none">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-desk-400 mb-1">Type</label>
+          <select id="item-type-select" class="w-full bg-desk-950 border border-desk-700 rounded p-2 text-desk-50 focus:border-accent focus:outline-none">
+            <option value="task">Task (Kanban)</option>
+            <option value="file">File Record</option>
+            <option value="note">Document Note</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-desk-700">
+        <button onclick="closeModal('modal-item')" class="px-3 py-1.5 border border-desk-700 text-desk-400 text-xs font-mono rounded hover:text-desk-50">Cancel</button>
+        <button onclick="submitNewItem()" class="px-3 py-1.5 bg-accent hover:bg-accent-hover text-white text-xs font-mono rounded">Create Element</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WORK SHARING PLAN CONFIGURE -->
+  <div id="modal-plan" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-desk-900 border border-desk-700 rounded w-full max-w-md p-5 space-y-4 shadow-2xl font-mono text-xs">
+      <div class="flex items-center justify-between border-b border-desk-700 pb-2">
+        <h3 class="text-xs font-bold text-desk-50 uppercase">Configure Work Sharing Plan</h3>
+        <button onclick="closeModal('modal-plan')" class="text-desk-400 hover:text-desk-50"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <p class="text-desk-400">Switch access level between Limited and Pro mode:</p>
+      
+      <div class="space-y-2">
+        <label class="flex items-center justify-between p-3 border border-desk-700 rounded cursor-pointer hover:bg-desk-800">
+          <div>
+            <div class="text-desk-50 font-bold">Limited Plan</div>
+            <div class="text-[10px] text-desk-400">1 Shared Project · Basic Teacher Module</div>
+          </div>
+          <input type="radio" name="plan_choice" value="LIMITED" id="plan-radio-limited">
+        </label>
+
+        <label class="flex items-center justify-between p-3 border border-desk-700 rounded cursor-pointer hover:bg-desk-800">
+          <div>
+            <div class="text-desk-50 font-bold text-accent">Pro Plan</div>
+            <div class="text-[10px] text-desk-400">Unlimited Shared Spaces & Full Teacher Access</div>
+          </div>
+          <input type="radio" name="plan_choice" value="PRO" id="plan-radio-pro" checked>
+        </label>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-desk-700">
+        <button onclick="closeModal('modal-plan')" class="px-3 py-1.5 border border-desk-700 text-desk-400 rounded">Close</button>
+        <button onclick="savePlanSetting()" class="px-3 py-1.5 bg-accent hover:bg-accent-hover text-white rounded">Save Setting</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC persistent in localStorage -->
+  <script>
+    // --- APP INITIAL STATE & STORAGE ---
+    const DEFAULT_STATE = {
+      currentSpace: 'projects',
+      activeProjectView: 'sections',
+      activeWorkSharingTab: 'sharing',
+      plan: 'PRO',
+      vaultLocked: true,
+      vaultPin: '1234',
+      sections: ['Alpha - Concept', 'Beta - UI Design', 'Gamma - Testing'],
+      items: [
+        { id: '1', title: 'Architecture Specification', section: 'Alpha - Concept', type: 'file', size: '1.2 MB', date: '2026-10-14' },
+        { id: '2', title: 'System UX Mockups', section: 'Beta - UI Design', type: 'file', size: '4.8 MB', date: '2026-10-15' },
+        { id: '3', title: 'Build Core Shell Navigation', section: 'Alpha - Concept', type: 'task', status: 'done', mapPos: { x: 40, y: 80 } },
+        { id: '4', title: 'Implement Draggable Canvas', section: 'Beta - UI Design', type: 'task', status: 'in_progress', mapPos: { x: 280, y: 140 } },
+        { id: '5', title: 'Setup Vault Security PIN', section: 'Gamma - Testing', type: 'task', status: 'todo', mapPos: { x: 520, y: 90 } },
+      ],
+      notes: [
+        { id: 'n1', title: 'Ableton & Sony Visual Philosophy', content: 'Design notes: Use dark graphite (#0F1012), 1px solid thin borders (#2D313B), and restrained orange (#FF6B00) accent for active states.' },
+        { id: 'n2', title: 'Single-File Architecture Standard', content: 'Ensure all components, styles, state management, and SVG rendering exist harmoniously inside one standalone index.html.' }
+      ],
+      activeNoteId: 'n1',
+      boardCards: [
+        { id: 'b1', title: 'Spatial Freeform Thinking', text: 'Connect concepts with straight engineered vector lines.', x: 50, y: 60 },
+        { id: 'b2', title: 'Teacher Sub-Module', text: 'Belongs inside Work Sharing space, not as a standalone app.', x: 380, y: 120 },
+        { id: 'b3', title: 'Vault Etiquette', text: 'PIN authentication keeps personal docs separated.', x: 220, y: 300 }
+      ],
+      boardConnections: [
+        { from: 'b1', to: 'b2' },
+        { from: 'b2', to: 'b3' }
+      ],
+      courses: [
+        { id: 'c1', title: 'System UX & Interface Design', lessons: 8, learners: 24, status: 'Active' },
+        { id: 'c2', title: 'Hardware Slate Web Engineering', lessons: 5, learners: 12, status: 'Draft' }
+      ],
+      vaultDocs: [
+        { id: 'v1', title: 'Personal_Passports_Scan.pdf', category: 'Identity', size: '2.4 MB' },
+        { id: 'v2', title: 'Tax_Declarations_2026.enc', category: 'Financial', size: '890 KB' }
+      ]
+    };
+
+    let state = JSON.parse(localStorage.getItem('COREDESK_STATE')) || DEFAULT_STATE;
+
+    function saveState() {
+      localStorage.setItem('COREDESK_STATE', JSON.stringify(state));
+    }
+
+    // --- NAVIGATION CONTROLLER ---
+    function switchSpace(spaceId) {
+      state.currentSpace = spaceId;
+      saveState();
+
+      // UI Toggling
+      document.querySelectorAll('.space-view').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`space-${spaceId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-desk-800', 'text-desk-50', 'border-l-2', 'border-accent');
+        btn.classList.add('text-desk-400');
+      });
+
+      const activeNav = document.getElementById(`nav-${spaceId}`);
+      if (activeNav) {
+        activeNav.classList.add('bg-desk-800', 'text-desk-50', 'border-l-2', 'border-accent');
+        activeNav.classList.remove('text-desk-400');
+      }
+
+      // Re-trigger visual refresh for specific space components
+      if (spaceId === 'projects') renderProjectsView();
+      if (spaceId === 'board') renderBoardCanvas();
+      if (spaceId === 'work-sharing') renderWorkSharing();
+      if (spaceId === 'vault') updateVaultUI();
+    }
+
+    // --- 1. PROJECTS SPACE LOGIC ---
+    function switchProjectView(viewId) {
+      state.activeProjectView = viewId;
+      saveState();
+
+      document.querySelectorAll('.pview-btn').forEach(btn => {
+        btn.classList.remove('bg-desk-800', 'text-desk-50', 'font-semibold');
+        btn.classList.add('text-desk-400');
+      });
+      const activeBtn = document.getElementById(`pview-${viewId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-desk-800', 'text-desk-50', 'font-semibold');
+        activeBtn.classList.remove('text-desk-400');
+      }
+
+      document.querySelectorAll('.pcontent-view').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`pcontent-${viewId}`).classList.remove('hidden');
+
+      renderProjectsView();
+    }
+
+    function renderProjectsView() {
+      const v = state.activeProjectView;
+      if (v === 'sections') renderSectionsView();
+      if (v === 'files') renderFilesView();
+      if (v === 'tasks') renderKanbanView();
+      if (v === 'notes') renderNotesView();
+      if (v === 'map') renderProjectMap();
+
+      document.getElementById('projects-count').innerText = state.items.length;
+    }
+
+    function renderSectionsView() {
+      const container = document.getElementById('sections-container');
+      container.innerHTML = '';
+
+      state.sections.forEach(secName => {
+        const secItems = state.items.filter(i => i.section === secName);
+        const secEl = document.createElement('div');
+        secEl.className = 'bg-desk-900 border border-desk-700 rounded p-3 space-y-3';
+        secEl.innerHTML = `
+          <div class="flex items-center justify-between pb-2 border-b border-desk-700">
+            <span class="text-xs font-mono font-bold text-desk-50">${secName}</span>
+            <span class="text-[10px] font-mono text-desk-400 bg-desk-800 px-1.5 py-0.5 rounded border border-desk-700">${secItems.length} items</span>
+          </div>
+          <div class="space-y-1.5">
+            ${secItems.map(item => `
+              <div class="p-2 bg-desk-950 border border-desk-700/80 rounded text-xs font-mono flex items-center justify-between">
+                <span class="text-desk-200 truncate">${item.title}</span>
+                <span class="text-[9px] uppercase px-1 py-0.2 rounded bg-desk-800 text-desk-400">${item.type}</span>
+              </div>
+            `).join('') || '<div class="text-[11px] font-mono text-desk-600 italic py-1">No section items</div>'}
+          </div>
+          <button onclick="openCreateItemModal('${secName}')" class="w-full py-1 text-[11px] font-mono text-desk-400 hover:text-accent border border-dashed border-desk-700 rounded hover:border-accent">
+            + Add to ${secName.split(' ')[0]}
+          </button>
+        `;
+        container.appendChild(secEl);
+      });
+    }
+
+    function renderFilesView() {
+      const container = document.getElementById('files-list-container');
+      const files = state.items.filter(i => i.type === 'file');
+      
+      if (files.length === 0) {
+        container.innerHTML = `<div class="p-4 text-center text-desk-400">No file records in project.</div>`;
+        return;
+      }
+
+      container.innerHTML = files.map(f => `
+        <div class="grid grid-cols-12 gap-2 px-4 py-2.5 items-center hover:bg-desk-800/40">
+          <div class="col-span-5 flex items-center gap-2 text-desk-50">
+            <i data-lucide="file-text" class="w-3.5 h-3.5 text-accent"></i>
+            <span>${f.title}</span>
+          </div>
+          <div class="col-span-3 text-desk-400 text-[11px]">${f.section}</div>
+          <div class="col-span-2 text-desk-400 text-[11px]">${f.size || '1.0 MB'}</div>
+          <div class="col-span-2 text-right">
+            <button onclick="deleteItem('${f.id}')" class="text-red-400 hover:underline text-[11px]">Delete</button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderKanbanView() {
+      ['todo', 'in_progress', 'done'].forEach(status => {
+        const col = document.getElementById(`kanban-${status}`);
+        const tasks = state.items.filter(i => i.type === 'task' && i.status === status);
+        document.getElementById(`count-${status}`).innerText = tasks.length;
+
+        col.innerHTML = tasks.map(t => `
+          <div class="p-3 bg-desk-950 border border-desk-700 rounded text-xs font-mono space-y-2 group">
+            <div class="text-desk-50 font-medium">${t.title}</div>
+            <div class="text-[10px] text-desk-400 flex items-center justify-between">
+              <span>${t.section}</span>
+              <div class="flex gap-1 opacity-80 group-hover:opacity-100">
+                ${status !== 'todo' ? `<button onclick="moveTask('${t.id}', 'prev')" class="hover:text-accent">←</button>` : ''}
+                ${status !== 'done' ? `<button onclick="moveTask('${t.id}', 'next')" class="hover:text-accent">→</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      });
+    }
+
+    function quickAddTask(status) {
+      const title = prompt('Enter Task Title:');
+      if (!title) return;
+      state.items.push({
+        id: Date.now().toString(),
+        title,
+        section: state.sections[0],
+        type: 'task',
+        status,
+        mapPos: { x: Math.floor(Math.random()*300)+50, y: Math.floor(Math.random()*200)+50 }
+      });
+      saveState();
+      renderProjectsView();
+    }
+
+    function moveTask(id, dir) {
+      const task = state.items.find(i => i.id === id);
+      if (!task) return;
+      const order = ['todo', 'in_progress', 'done'];
+      let idx = order.indexOf(task.status);
+      if (dir === 'next' && idx < 2) task.status = order[idx + 1];
+      if (dir === 'prev' && idx > 0) task.status = order[idx - 1];
+      saveState();
+      renderProjectsView();
+    }
+
+    function renderNotesView() {
+      const list = document.getElementById('notes-list');
+      list.innerHTML = state.notes.map(n => `
+        <button onclick="selectNote('${n.id}')" class="w-full text-left p-2 rounded border text-xs font-mono truncate transition-colors ${state.activeNoteId === n.id ? 'bg-desk-800 border-accent text-desk-50' : 'bg-desk-950 border-desk-700 text-desk-400 hover:text-desk-50'}">
+          ${n.title || 'Untitled Note'}
+        </button>
+      `).join('');
+
+      const activeNote = state.notes.find(n => n.id === state.activeNoteId);
+      if (activeNote) {
+        document.getElementById('note-editor-title').value = activeNote.title;
+        document.getElementById('note-editor-content').value = activeNote.content;
+      }
+    }
+
+    function selectNote(id) {
+      state.activeNoteId = id;
+      saveState();
+      renderNotesView();
+    }
+
+    function createNewNote() {
+      const newNote = { id: 'n_' + Date.now(), title: 'New Technical Note', content: '' };
+      state.notes.push(newNote);
+      state.activeNoteId = newNote.id;
+      saveState();
+      renderNotesView();
+    }
+
+    function saveActiveNote() {
+      const activeNote = state.notes.find(n => n.id === state.activeNoteId);
+      if (activeNote) {
+        activeNote.title = document.getElementById('note-editor-title').value;
+        activeNote.content = document.getElementById('note-editor-content').value;
+        saveState();
+        document.getElementById('note-editor-status').innerText = 'Saved ' + new Date().toLocaleTimeString();
+      }
+    }
+
+    function renderProjectMap() {
+      const canvas = document.getElementById('project-map-canvas');
+      canvas.innerHTML = '';
+
+      state.items.forEach((item, idx) => {
+        const pos = item.mapPos || { x: (idx * 160) % 500 + 40, y: Math.floor(idx/3)*120 + 60 };
+        const node = document.createElement('div');
+        node.className = 'absolute bg-desk-900 border border-desk-700 p-2.5 rounded shadow-lg text-xs font-mono w-44 cursor-move hover:border-accent z-10';
+        node.style.left = pos.x + 'px';
+        node.style.top = pos.y + 'px';
+        node.innerHTML = `
+          <div class="flex items-center justify-between text-[10px] text-desk-400 mb-1">
+            <span class="uppercase">${item.type}</span>
+            <button onclick="removeFromMap('${item.id}')" title="Hide from Map" class="text-red-400 hover:underline">×</button>
+          </div>
+          <div class="text-desk-50 font-semibold truncate">${item.title}</div>
+          <div class="text-[9px] text-desk-400 mt-1">${item.section}</div>
+        `;
+        makeDraggable(node, (newX, newY) => {
+          item.mapPos = { x: newX, y: newY };
+          saveState();
+          drawProjectMapLines();
+        });
+        canvas.appendChild(node);
+      });
+
+      drawProjectMapLines();
+    }
+
+    function drawProjectMapLines() {
+      const svg = document.getElementById('project-map-svg');
+      svg.innerHTML = '';
+      // Connect sequential nodes with subtle curved paths
+      for (let i = 0; i < state.items.length - 1; i++) {
+        const itemA = state.items[i];
+        const itemB = state.items[i+1];
+        if (itemA.mapPos && itemB.mapPos) {
+          const x1 = itemA.mapPos.x + 88;
+          const y1 = itemA.mapPos.y + 30;
+          const x2 = itemB.mapPos.x + 88;
+          const y2 = itemB.mapPos.y + 30;
+          
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', x1);
+          line.setAttribute('y1', y1);
+          line.setAttribute('x2', x2);
+          line.setAttribute('y2', y2);
+          line.setAttribute('stroke', '#2D313B');
+          line.setAttribute('stroke-width', '1.5');
+          line.setAttribute('stroke-dasharray', '4 4');
+          svg.appendChild(line);
+        }
+      }
+    }
+
+    function removeFromMap(id) {
+      if (confirm("Hide element from Spatial Map? (Underlying element remains in project)")) {
+        delete state.items.find(i => i.id === id).mapPos;
+        saveState();
+        renderProjectMap();
+      }
+    }
+
+    // --- 2. BOARD SPACE LOGIC ---
+    function renderBoardCanvas() {
+      const layer = document.getElementById('board-cards-layer');
+      layer.innerHTML = '';
+
+      state.boardCards.forEach(card => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'absolute bg-desk-900 border border-desk-700 p-3 rounded text-xs font-mono w-56 shadow-xl hover:border-accent z-10';
+        cardEl.style.left = card.x + 'px';
+        cardEl.style.top = card.y + 'px';
+        cardEl.innerHTML = `
+          <div class="flex items-center justify-between mb-1 pb-1 border-b border-desk-700/60">
+            <span class="text-accent font-bold">${card.title}</span>
+            <button onclick="deleteBoardCard('${card.id}')" class="text-desk-400 hover:text-red-400">×</button>
+          </div>
+          <p class="text-desk-200 leading-normal text-[11px]">${card.text}</p>
+        `;
+        makeDraggable(cardEl, (nx, ny) => {
+          card.x = nx;
+          card.y = ny;
+          saveState();
+          drawBoardConnections();
+        });
+        layer.appendChild(cardEl);
+      });
+
+      drawBoardConnections();
+      document.getElementById('board-nodes-count').innerText = state.boardCards.length;
+    }
+
+    function drawBoardConnections() {
+      const svg = document.getElementById('board-svg-connections');
+      svg.innerHTML = '';
+
+      state.boardConnections.forEach(conn => {
+        const c1 = state.boardCards.find(c => c.id === conn.from);
+        const c2 = state.boardCards.find(c => c.id === conn.to);
+        if (c1 && c2) {
+          const x1 = c1.x + 112;
+          const y1 = c1.y + 40;
+          const x2 = c2.x + 112;
+          const y2 = c2.y + 40;
+
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          // Orthogonal step line (Ableton/Sony hardware schematic look)
+          const midX = (x1 + x2) / 2;
+          const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+          
+          path.setAttribute('d', d);
+          path.setAttribute('stroke', '#FF6B00');
+          path.setAttribute('stroke-width', '1.5');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('opacity', '0.6');
+          svg.appendChild(path);
+        }
+      });
+    }
+
+    function addBoardIdeaCard() {
+      const title = prompt('Idea Card Title:', 'New Idea Concept');
+      if (!title) return;
+      const text = prompt('Idea Description:', 'Detailed thought or note...');
+      const newCard = {
+        id: 'b_' + Date.now(),
+        title,
+        text: text || '',
+        x: Math.floor(Math.random() * 200) + 100,
+        y: Math.floor(Math.random() * 200) + 100
+      };
+      state.boardCards.push(newCard);
+      saveState();
+      renderBoardCanvas();
+    }
+
+    function deleteBoardCard(id) {
+      state.boardCards = state.boardCards.filter(c => c.id !== id);
+      state.boardConnections = state.boardConnections.filter(c => c.from !== id && c.to !== id);
+      saveState();
+      renderBoardCanvas();
+    }
+
+    function clearBoardConnections() {
+      state.boardConnections = [];
+      saveState();
+      renderBoardCanvas();
+    }
+
+    // --- DRAG HELPER FOR MAP & BOARD ---
+    function makeDraggable(element, onMoveCallback) {
+      let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
+      element.onmousedown = dragMouseDown;
+
+      function dragMouseDown(e) {
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+        e.preventDefault();
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e.preventDefault();
+        posX = mouseX - e.clientX;
+        posY = mouseY - e.clientY;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        
+        const newTop = element.offsetTop - posY;
+        const newLeft = element.offsetLeft - posX;
+
+        element.style.top = newTop + "px";
+        element.style.left = newLeft + "px";
+
+        if (onMoveCallback) onMoveCallback(newLeft, newTop);
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+    // --- 3. WORK SHARING & TEACHER LOGIC ---
+    function switchWorkSharingTab(tabId) {
+      state.activeWorkSharingTab = tabId;
+      saveState();
+
+      document.querySelectorAll('.wstab-btn').forEach(b => {
+        b.classList.remove('bg-desk-800', 'text-desk-50');
+        b.classList.add('text-desk-400');
+      });
+      document.getElementById(`wstab-${tabId}`).classList.add('bg-desk-800', 'text-desk-50');
+
+      document.querySelectorAll('.wscontent-view').forEach(e => e.classList.add('hidden'));
+      document.getElementById(`wscontent-${tabId}`).classList.remove('hidden');
+
+      renderWorkSharing();
+    }
+
+    function renderWorkSharing() {
+      // Teacher Courses Render
+      const container = document.getElementById('teacher-courses-list');
+      container.innerHTML = state.courses.map(c => `
+        <div class="p-3 bg-desk-950 border border-desk-700 rounded space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-desk-50">${c.title}</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-desk-800 text-accent border border-accent/20">${c.status}</span>
+          </div>
+          <div class="text-[11px] text-desk-400 flex items-center justify-between pt-2 border-t border-desk-700/50">
+            <span>${c.lessons} Lessons · ${c.learners} Enrolled</span>
+            <button onclick="alert('Course sharing link ready')" class="text-desk-200 hover:text-accent">Manage →</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Update plan badges
+      document.getElementById('ws-plan-tag').innerText = `${state.plan} ACCESS`;
+      document.getElementById('plan-badge-sidebar').innerText = state.plan;
+      document.getElementById('current-plan-display').innerText = state.plan;
+    }
+
+    function createNewCoursePrompt() {
+      const title = prompt('Course Title:');
+      if (!title) return;
+      state.courses.push({
+        id: 'c_' + Date.now(),
+        title,
+        lessons: 1,
+        learners: 0,
+        status: 'Active'
+      });
+      saveState();
+      renderWorkSharing();
+    }
+
+    function copyShareLink(title) {
+      alert(`Access link for "${title}" copied to clipboard.`);
+    }
+
+    // --- 4. PRIVATE VAULT LOGIC ---
+    function movePinFocus(idx) {
+      const val = document.getElementById(`pin-${idx}`).value;
+      if (val && idx < 4) {
+        document.getElementById(`pin-${idx + 1}`).focus();
+      }
+      // Auto check on 4th digit
+      if (idx === 4) {
+        const pin = [1,2,3,4].map(i => document.getElementById(`pin-${i}`).value).join('');
+        unlockVault(pin);
+      }
+    }
+
+    function unlockVault(inputPin) {
+      if (inputPin === state.vaultPin) {
+        state.vaultLocked = false;
+        saveState();
+        updateVaultUI();
+      } else {
+        document.getElementById('vault-error-msg').classList.remove('hidden');
+      }
+    }
+
+    function lockVault() {
+      state.vaultLocked = true;
+      saveState();
+      updateVaultUI();
+    }
+
+    function updateVaultUI() {
+      const lockedScreen = document.getElementById('vault-locked-screen');
+      const unlockedScreen = document.getElementById('vault-unlocked-screen');
+
+      if (state.vaultLocked) {
+        lockedScreen.classList.remove('hidden');
+        unlockedScreen.classList.add('hidden');
+        document.getElementById('vault-status-icon').setAttribute('data-lucide', 'lock');
+        [1,2,3,4].forEach(i => document.getElementById(`pin-${i}`).value = '');
+      } else {
+        lockedScreen.classList.add('hidden');
+        unlockedScreen.classList.remove('hidden');
+        document.getElementById('vault-status-icon').setAttribute('data-lucide', 'unlock');
+        renderVaultDocs();
+      }
+      lucide.createIcons();
+    }
+
+    function renderVaultDocs() {
+      const container = document.getElementById('vault-docs-list');
+      container.innerHTML = state.vaultDocs.map(doc => `
+        <div class="grid grid-cols-12 gap-2 px-4 py-2.5 items-center hover:bg-desk-800/40">
+          <div class="col-span-6 flex items-center gap-2 text-desk-50">
+            <i data-lucide="file-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>${doc.title}</span>
+          </div>
+          <div class="col-span-3 text-desk-400 text-[11px]">${doc.category}</div>
+          <div class="col-span-3 text-right">
+            <button onclick="deleteVaultDoc('${doc.id}')" class="text-red-400 hover:underline text-[11px]">Remove</button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function addVaultDocumentPrompt() {
+      const title = prompt('Private Document Name:');
+      if (!title) return;
+      state.vaultDocs.push({
+        id: 'v_' + Date.now(),
+        title,
+        category: 'Personal',
+        size: '1.1 MB'
+      });
+      saveState();
+      renderVaultDocs();
+    }
+
+    function deleteVaultDoc(id) {
+      state.vaultDocs = state.vaultDocs.filter(d => d.id !== id);
+      saveState();
+      renderVaultDocs();
+    }
+
+    // --- MODAL UTILITIES ---
+    function openCreateItemModal(defaultSec) {
+      const select = document.getElementById('item-section-select');
+      select.innerHTML = state.sections.map(s => `<option value="${s}">${s}</option>`).join('');
+      if (defaultSec) select.value = defaultSec;
+      document.getElementById('modal-item').classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function submitNewItem() {
+      const title = document.getElementById('item-title-input').value;
+      const section = document.getElementById('item-section-select').value;
+      const type = document.getElementById('item-type-select').value;
+
+      if (!title) return;
+
+      state.items.push({
+        id: Date.now().toString(),
+        title,
+        section,
+        type,
+        status: 'todo',
+        size: '1.5 MB',
+        mapPos: { x: 100, y: 100 }
+      });
+
+      saveState();
+      closeModal('modal-item');
+      renderProjectsView();
+    }
+
+    function addSectionPrompt() {
+      const sec = prompt('Section Name:');
+      if (sec && !state.sections.includes(sec)) {
+        state.sections.push(sec);
+        saveState();
+        renderProjectsView();
+      }
+    }
+
+    function deleteItem(id) {
+      state.items = state.items.filter(i => i.id !== id);
+      saveState();
+      renderProjectsView();
+    }
+
+    function togglePlanModal() {
+      document.getElementById('modal-plan').classList.remove('hidden');
+    }
+
+    function savePlanSetting() {
+      const choice = document.querySelector('input[name="plan_choice"]:checked').value;
+      state.plan = choice;
+      saveState();
+      closeModal('modal-plan');
+      renderWorkSharing();
+    }
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      lucide.createIcons();
+      switchSpace(state.currentSpace);
+      switchProjectView(state.activeProjectView);
+    };
+  </script>
+</body>
+</html>
